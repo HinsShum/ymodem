@@ -227,7 +227,7 @@ static int32_t _state_timeout(ymodem_t *pymodem)
 {
     int32_t retval = YMODEM_ERR_OK;
 
-    if(!pymodem->recv_counts) {
+    if(!pymodem->recv_counts && !pymodem->end) {
         pymodem->ctx->putc(C);
     } else {
         if(++pymodem->errs > YMODEM_ERR_MAX_COUNT) {
@@ -250,6 +250,10 @@ static int32_t _state_ok(ymodem_t *pymodem)
     uint32_t size = 0;
 
     do {
+        if(frame->index == 0 && pymodem->recv_counts == 1) {
+            /* skip repeate start frame */
+            break;
+        }
         if(frame->index != (pymodem->recv_counts & 0xFF)) {
             _force_cancel(pymodem->ctx);
             retval = YMODEM_ERR_INDEX;
@@ -257,7 +261,7 @@ static int32_t _state_ok(ymodem_t *pymodem)
         }
         if(!pymodem->recv_counts) {
             filename = frame->data;
-            if(isprint(filename[0])) {
+            if(!isprint(filename[0])) {
                 /* no file name, transfer over */
                 pymodem->ctx->putc(ACK);
                 retval = YMODEM_ERR_OVER;
@@ -296,7 +300,6 @@ static int32_t _state_ok(ymodem_t *pymodem)
         } else {
             pymodem->recv_counts++;
         }
-        pymodem->recv_size += pymodem->frame_length;
         if(pymodem->ctx->frame_save) {
             if(!pymodem->ctx->frame_save(pymodem->recv_size, frame->data, pymodem->frame_length)) {
                 _force_cancel(pymodem->ctx);
@@ -304,6 +307,7 @@ static int32_t _state_ok(ymodem_t *pymodem)
                 break;
             }
         }
+        pymodem->recv_size += pymodem->frame_length;
         pymodem->ctx->putc(ACK);
     } while(0);
 
