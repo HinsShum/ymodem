@@ -136,7 +136,7 @@ static void _reset(ymodem_t *pymodem)
     pymodem->fsize = 0;
 }
 
-static bool _force_cancel(ymodem_context_t *ctx)
+static void _force_cancel(ymodem_context_t *ctx)
 {
     ctx->putc((uint8_t)CAN);
     ctx->putc((uint8_t)CAN);
@@ -269,20 +269,20 @@ static int32_t _state_ok(ymodem_t *pymodem)
             }
             /* start transfer */
             _reset(pymodem);
-            filesize = filename + strlen(filename) + 1;
+            filesize = filename + strlen((char *)filename) + 1;
 #if YMODEM_SAVE_FILE_NAME
-            strncpy(pymodem->fname, filename, YMODEM_FILENAME_SIZE);
+            strncpy((char *)pymodem->fname, (char *)filename, YMODEM_FILENAME_SIZE);
             filename = pymodem->fname;
 #endif
-            if((p = strstr(filesize, " ")) == NULL) {
+            if((p = (uint8_t *)strstr((char *)filesize, " ")) == NULL) {
                 _force_cancel(pymodem->ctx);
                 retval = YMODEM_ERR_FAILED;
                 break;
             }
             *p = '\0';
-            pymodem->fsize = strtoul(filesize, NULL, 10);
+            pymodem->fsize = strtoul((char *)filesize, NULL, 10);
             if(pymodem->ctx->file_verify) {
-                if(!pymodem->ctx->file_verify(filename, pymodem->fsize)) {
+                if(!pymodem->ctx->file_verify((char *)filename, pymodem->fsize)) {
                     _force_cancel(pymodem->ctx);
                     retval = YMODEM_ERR_VERIFY;
                     break;
