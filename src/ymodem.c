@@ -145,7 +145,6 @@ static void _force_cancel(ymodem_context_t *ctx)
 static int32_t _recv_frame(ymodem_t *pymodem)
 {
     uint8_t ch = 0;
-    uint16_t crc16 = 0;
     uint32_t data_length = 0;
     int32_t retval = YMODEM_RECV_STATE_OK;
     frame_t *frame = NULL;
@@ -247,7 +246,6 @@ static int32_t _state_ok(ymodem_t *pymodem)
     frame_t *frame = (frame_t *)pymodem->ctx->pbuf;
     uint8_t *filename = NULL, *filesize = NULL;
     uint8_t *p = NULL;
-    uint32_t size = 0;
 
     do {
         if(frame->index == 0 && pymodem->recv_counts == 1) {
